@@ -1,0 +1,38 @@
+# Ignore CMake build artifacts
+**/build/
+**/CMakeFiles/
+**/CMakeCache.txt
+**/cmake_install.cmake
+**/Makefile
+**/Makefile2
+**/TargetDirectories.txt
+**/CMakeConfigureLog.yaml
+**/CMakeDirectoryInformation.cmake
+**/cmake.check_cache
+**/progress.marks
+**/pkgRedirects
+
+# Ignore object files, dependency files, and shared libraries
+**/*.o
+**/*.o.d
+**/*.so
+**/*.a
+**/*.lib
+**/*.dll
+
+# Ignore compiler test files
+**/CompilerIdC/
+**/tmp/
+**/a.out
+
+# Ignore scratch/build logs
+**/CMakeScratch/
+**/*.make
+**/*.ts
+**/*.bin
+
+# Ignore OS-specific junk
+.DS_Store
+Thumbs.db
+
+mosquitto
