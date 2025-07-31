@@ -33,11 +33,30 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_opt *opts,
     return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_auth_unpwd_check(void *user_data, struct mosquitto *client,
-                               const char *username, const char *password)
+//int mosquitto_auth_unpwd_check(void *user_data, struct mosquitto *client,
+//                               const char *username, const char *password)
+//{
+//    mosquitto_log_printf(MOSQ_LOG_INFO, "[JWT-AUTH] Checking username: %s",
+//                         username ? username : "(null)");
+//    return MOSQ_ERR_SUCCESS;
+//}
+
+int mosquitto_auth_unpwd_check(void *user_data, struct mosquitto *client, const char *username, const char *password)
 {
-    mosquitto_log_printf(MOSQ_LOG_INFO, "[JWT-AUTH] Checking username: %s",
-                         username ? username : "(null)");
+    enum mosquitto_protocol proto = mosquitto_client_protocol(client);
+
+    if(proto == mp_websockets)
+    {
+        mosquitto_log_printf(MOSQ_LOG_INFO, "[JWT-AUTH] WebSocket connection from client: %s",
+            mosquitto_client_id(client) ? mosquitto_client_id(client) : "(unknown)");
+    }
+    else
+    {
+        mosquitto_log_printf(MOSQ_LOG_INFO, "[JWT-AUTH] Non-WebSocket connection (MQTT/TCP) from client: %s",
+            mosquitto_client_id(client) ? mosquitto_client_id(client) : "(unknown)");
+    }
+
+    // Always allow for now
     return MOSQ_ERR_SUCCESS;
 }
 
