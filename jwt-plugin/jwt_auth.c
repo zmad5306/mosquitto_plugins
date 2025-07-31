@@ -2,6 +2,11 @@
 #include <mosquitto_broker.h>
 #include <mosquitto_plugin.h>
 #include <stdio.h>
+#include <string.h>
+#include <jwt.h> // libjwt
+
+#define JWT_SECRET "supersecret" // TODO: move to mosquitto.conf options
+#define JWT_ALG JWT_ALG_HS256    // HS256 algorithm
 
 int mosquitto_auth_plugin_version(void)
 {
@@ -49,15 +54,42 @@ int mosquitto_auth_unpwd_check(void *user_data, struct mosquitto *client, const 
     {
         mosquitto_log_printf(MOSQ_LOG_INFO, "[JWT-AUTH] WebSocket connection from client: %s",
             mosquitto_client_id(client) ? mosquitto_client_id(client) : "(unknown)");
+
+        // Expect JWT in password field (could also check username)
+        if(password == NULL || strlen(password) == 0)
+        {
+            mosquitto_log_printf(MOSQ_LOG_ERR, "[JWT-AUTH] No JWT token provided");
+            return MOSQ_ERR_AUTH;
+        }
+
+        // Decode and validate JWT
+        jwt_t *jwt = NULL;
+        if(jwt_decode(&jwt, password, (unsigned char *)JWT_SECRET, strlen(JWT_SECRET)) != 0)
+        {
+            mosquitto_log_printf(MOSQ_LOG_ERR, "[JWT-AUTH] Invalid JWT token");
+            return MOSQ_ERR_AUTH;
+        }
+
+        // Optional: check claims
+        const char *sub = jwt_get_grant(jwt, "sub");
+        if(!sub)
+        {
+            mosquitto_log_printf(MOSQ_LOG_ERR, "[JWT-AUTH] Missing 'sub' claim");
+            jwt_free(jwt);
+            return MOSQ_ERR_AUTH;
+        }
+
+        mosquitto_log_printf(MOSQ_LOG_INFO, "[JWT-AUTH] JWT valid, subject: %s", sub);
+
+        jwt_free(jwt);
     }
     else
     {
-        mosquitto_log_printf(MOSQ_LOG_INFO, "[JWT-AUTH] Non-WebSocket connection (MQTT/TCP) from client: %s",
+        mosquitto_log_printf(MOSQ_LOG_INFO, "[JWT-AUTH] Non-WebSocket connection from client: %s",
             mosquitto_client_id(client) ? mosquitto_client_id(client) : "(unknown)");
     }
 
-    // Always allow for now
-    return MOSQ_ERR_SUCCESS;
+    return MOSQ_ERR_SUCCESS; // allow if passed checks
 }
 
 int mosquitto_auth_acl_check(void *user_data, int access, struct mosquitto *client,
